@@ -103,6 +103,50 @@ app.post('/api/deleteproject',async(req,res) => {
 })
 
 
+app.get('/api/getskills', async (req, res) => {
+    let response = [];
+    response  = await query_execute(`SELECT * FROM webdata4.skill where skill.Delete = 'N'`);
+    res.json(response);
+});
+
+app.post(`/api/updateskill`, async (req, res) => {
+    const { skill } = req.body;
+    let set = '';
+    let objectLength =  Object.keys(skill).length -1;
+    Object.entries(skill).map((value, key) => {
+        console.log(key);
+        if (key !== objectLength) {
+            if (key > 0) {
+                set += `${value[0]}='${value[1]}',`;
+            }
+        } else {
+            set += `${value[0]}='${value[1]}'`;
+        }
+    })
+    let response = await query_execute(`UPDATE webdata4.skill SET ${set} where Skill_ID = ?`,skill.Skill_ID);
+    res.json(response);
+});
+
+app.post(`/api/addskill`, async (req, res) => {
+    const { skill } = req.body;
+    let values = [];
+    Object.entries(skill).map((value, key) => {
+        values.push(value[1]);
+    });
+    console.log(values);
+    let response = await insert_query(`INSERT INTO  webdata4.skill (Skill_ID,Skill_Name) values ?`,values);
+    console.log(response);
+    res.json(response);
+});
+
+app.post('/api/deleteskill',async(req,res) => {
+    const { skill } = req.body;
+    let response = await query_execute(`DELETE FROM  webdata4.skill  where Skill_ID = ?`,skill.Skill_ID);
+    console.log(response);
+    res.json(response);
+})
+
+
 const port = 4000;
 
 app.listen(port, () => console.log(`Listening on port ${port}...`));
