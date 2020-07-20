@@ -16,6 +16,39 @@ app.get('/app', function (req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
+app.post('/api/registerUser',async(req,res) => {
+    const { user } = req.body;
+    console.log(user);
+    let values = [];
+    Object.entries(user).map((value, key) => {
+        values.push(value[1]);
+    });
+    console.log(values);
+    let response = await insert_query(`INSERT INTO  webdata4.user(User_Name,Password) values ?`, values);
+    console.log(response);
+    if(response.status === 200){
+        return res.status(200).json({status:200,message:'Register Succesfull'});
+    }
+    return res.status(400).json({status:400,message:'Register Failed'});
+});
+
+app.post("/api/login",async(req,res) => {
+    const { userName: email, password } = req.body.values;
+    console.log(email, password);
+    let response = {};
+    const user = await query_execute(`select * from webdata4.user where user.User_Name = '${email}'`);
+    console.log(user);
+    if (user.status === 200) {
+        if (user.data[0].Password === password) {
+            return res.status(200).json({ status: 200, message: 'Login Success', isAdmin: user.data[0].isAdmin });
+        } else {
+            return res.status(400).json({ status: 400, message: 'Login Failure' });
+        }
+    } else {
+        return res.status(404).json({ status: 404, message: 'User Not Found' });
+    }
+})
+
 app.post('/api/login', async (req, res) => {
     const { userName:email, password } = req.body.values;
     const response = {};
@@ -194,6 +227,12 @@ app.post('/api/assignTaskToResoruce', async (req, res) => {
     console.log(response);
     res.json(response);
 });
+app.get('/api/getTimeSheetRecord',async(req,res) => {
+    const { month,year,resourcename } = req.body;
+    let response = await insert_query(`Select * from webdata4.capacity_demand where Month='jan' and Year='2020' and Resource_Name='Suresh Susarla' `);
+    console.log(response);
+    res.json(response);
+})
 
 
 const port = 4000;
