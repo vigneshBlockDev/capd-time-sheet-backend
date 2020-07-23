@@ -32,13 +32,18 @@ app.post('/api/registerUser',async(req,res) => {
     return res.status(400).json({status:400,message:'Register Failed'});
 });
 
+app.get('/api/getLoginDetails',async(req,res) => {
+    const user = await query_execute(`select * from webdata4.user`);
+    res.send(user);
+})
+
 app.post("/api/login",async(req,res) => {
     const { userName: email, password } = req.body.values;
     console.log(email, password);
     let response = {};
     const user = await query_execute(`select * from webdata4.user where user.User_Name = '${email}'`);
     console.log(user);
-    if (user.status === 200) {
+    if (user.status === 200 && user.data.length > 0) {
         if (user.data[0].Password === password) {
             return res.status(200).json({ status: 200, message: 'Login Success', isAdmin: user.data[0].isAdmin });
         } else {
@@ -234,6 +239,17 @@ app.get('/api/getTimeSheetRecord',async(req,res) => {
     res.json(response);
 })
 
+app.get('/api/fetchMonthYear',async(req,res) => {
+    const data = await query_execute(`select distinct week_ID,month,year,To_Date from week_details `);
+    console.log(data);
+    res.send(data);
+})
+
+app.get('/api/fetchTransactionDetails',async(req,res) => {
+    const data = await query_execute(`select * from projects`);
+    console.log(data);
+    res.send(data);
+})
 
 const port = 4000;
 
