@@ -45,7 +45,7 @@ app.post("/api/login",async(req,res) => {
     console.log(user);
     if (user.status === 200 && user.data.length > 0) {
         if (user.data[0].Password === password) {
-            return res.status(200).json({ status: 200, message: 'Login Success', isAdmin: user.data[0].isAdmin });
+            return res.status(200).json({ status: 200, message: 'Login Success', isAdmin: user.data[0].isAdmin,username:user.data[0].User_Name });
         } else {
             return res.status(400).json({ status: 400, message: 'Login Failure' });
         }
@@ -232,9 +232,9 @@ app.post('/api/assignTaskToResoruce', async (req, res) => {
     console.log(response);
     res.json(response);
 });
-app.get('/api/getTimeSheetRecord',async(req,res) => {
+app.post('/api/getTimeSheetRecord',async(req,res) => {
     const { month,year,resourcename } = req.body;
-    let response = await insert_query(`Select * from webdata4.capacity_demand where Month='jan' and Year='2020' and Resource_Name='Suresh Susarla' `);
+    let response = await insert_query(`Select * from webdata4.capacity_demand where Month='${month}' and Year='${year}' and Resource_Name='${resourcename}' `);
     console.log(response);
     res.json(response);
 })
@@ -251,6 +251,90 @@ app.get('/api/fetchTransactionDetails',async(req,res) => {
     res.send(data);
 })
 
+app.get('/api/fetchProjectDetails',async(req,res) => {
+    const data = await query_execute('select * from projects');
+    res.send(data);
+})
+
+app.get('/api/fetchResourceDetails',async(req,res)=> {
+    const data = await query_execute(`select distinct * from resources order by Resource_Name`);
+    console.log(data);
+    res.send(data);
+
+});
+
+
+app.post("/api/resourceTimeSheet", (req, res) => {
+    console.log("post Request", req.body);
+    let date_ob = new Date();
+
+    let date = ("0" + date_ob.getDate()).slice(-2);
+    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+    let year = date_ob.getFullYear();
+    let hours = date_ob.getHours();
+    let minutes = date_ob.getMinutes();
+    let seconds = date_ob.getSeconds();
+    let dateFormated = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+
+
+    let newObjArr = req.body.managerList.taskList.map((item) => {
+        return {
+            Resource_ID: req.body.managerList.resourceID,
+            Resource_Name: req.body.managerList.resourceName,
+            Week_ID: req.body.managerList.weekID,
+            To_Date: req.body.managerList.weekEndDate,
+            Year: req.body.managerList.year,
+            Project_Code: item.projectCode,
+            Project_Name: item.projectName,
+            Planned_Hours: item.planned,
+            created_at: new Date(),
+            created_by: req.body.managerList.resourceName,
+            Actual_Hours: item.actual
+        }
+    })
+    console.log(newObjArr);
+    newObjArr.map(async (data) => {
+        query_execute(" select count(*) as totalsize  from capacity_demand where Resource_ID = '" + data.Resource_ID + "' and Week_ID = '" + data.Week_ID + "' and Project_Code = '" + data.Project_Code + "'")
+            .then(function (rows) {
+                console.log(rows);
+                console.log("Record Lenght : " + rows.data[0].totalsize + " Project Code : " + data.Project_Code);
+                if (Number(rows.data[0].totalsize) === 0) {
+                    query_execute("insert into capacity_demand SET ?", data).then(function (rows) {
+                        console.log("Inserted the details Sucessfully : " + data.Project_Code);
+
+                    })
+                        .catch(error => {
+                            console.log("something bad happened somewhere, rollback!");
+                        });
+                } else {
+                    //console.log("dateFormat : "+ data.created_at);
+
+                    query_execute("update capacity_demand SET Planned_Hours = '" + data.Planned_Hours + "', Actual_Hours = '" + data.Actual_Hours + "', modified_at = '" + dateFormated + "', modified_by = '" + data.Resource_Name + "' where Resource_ID = '" + data.Resource_ID + "' and Week_ID = '" + data.Week_ID + "' and Project_Code = '" + data.Project_Code + "'").then(function (rows) {
+                        console.log("Update the details sucessfully : " + data.Project_Code);
+                    })
+                        .catch(error => {
+                            console.log("something bad happened somewhere, rollback!");
+                        });
+                }
+            });
+    });
+    res.status(201).json(newObjArr);
+});
+
+app.post("/api/fetchAssignedProject", (req, res) => {
+    // console.log("ids : ", req.body.idSelection);
+    const resID = req.body.idSelection.resourceID;
+    const weekId = req.body.idSelection.weekID;
+    const year = req.body.idSelection.year;
+    query_execute("select Project_Code,Project_Name,Planned_Hours from capacity_demand where Resource_ID = '" + resID + "' and Week_ID = '" + weekId + "' and Year = '" + year + "'").then(function (rows) {
+        // console.log(rows);
+        res.json(rows);
+        console.log("Fetcting Manager Assignee Projects based on  resource : " + resID + "and week : " + weekId + " year : " + year);
+    })
+        .catch(error => {
+            console.log("something bad happened somewhere, rollback!");
+        });
+});
 const port = 4000;
 
 app.listen(port, () => console.log(`Listening on port ${port}...`));
