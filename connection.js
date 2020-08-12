@@ -1,11 +1,11 @@
 const db = require('./dbConfig.js');
 var mysql = require("mysql");
 var dbConfig = {
-    host: "den1.mysql4.gear.host",
+  host: "den1.mysql4.gear.host",
     user: "webdata4",
     password: "Yy3Ni~8zE8k_",
     database: "webdata4",
-};
+};  
 function connectionCheck() {
     return new Promise((resolve, reject) => {
         db.getConnection(function (err, connection) {

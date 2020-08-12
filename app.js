@@ -24,7 +24,7 @@ app.post('/api/registerUser',async(req,res) => {
         values.push(value[1]);
     });
     console.log(values);
-    let response = await insert_query(`INSERT INTO  webdata4.user(User_Name,Password) values ?`, values);
+    let response = await insert_query(`INSERT INTO  user(User_Name,Password) values ?`, values);
     console.log(response);
     if(response.status === 200){
         return res.status(200).json({status:200,message:'Register Succesfull'});
@@ -41,7 +41,7 @@ app.post("/api/login",async(req,res) => {
     const { userName: email, password } = req.body.values;
     console.log(email, password);
     let response = {};
-    const user = await query_execute(`select * from webdata4.user where user.User_Name = '${email}'`);
+    const user = await query_execute(`select * from user where user.User_Name = '${email}'`);
     console.log(user);
     if (user.status === 200 && user.data.length > 0) {
         if (user.data[0].Password === password) {
@@ -54,23 +54,10 @@ app.post("/api/login",async(req,res) => {
     }
 })
 
-app.post('/api/login', async (req, res) => {
-    const { userName:email, password } = req.body.values;
-    const response = {};
-    if (email === 'admin-capd-time-sheet@gmail.com' && password === '#Include<admin.h>') {
-        response['isAdmin'] = true;
-        return res.status(200).json(response);
-        } else if (email === 'user-capd-time-sheet@gmail.com' && password === '#Include<user.h>') {
-            response['isAdmin'] = false;
-        return res.status(200).json(response);
-    } else {
-        return res.json({ status: 400, message: 'Login Failed' });
-    }
-});
 
 app.get('/api/getresources', async (req, res) => {
     let response = [];
-    response = await query_execute(`SELECT * FROM webdata4.resources where resources.Delete = 'N'`);
+    response = await query_execute(`SELECT * FROM resources where resources.Delete = 'N'`);
     res.json(response);
 });
 
@@ -80,7 +67,6 @@ app.post(`/api/updateresources`, async (req, res) => {
     let objectLength = Object.keys(user).length - 1;
     console.log(objectLength);
     Object.entries(user).map((value, key) => {
-        ssss
         console.log(key);
         if (key !== objectLength) {
             if (key > 0) {
@@ -91,7 +77,7 @@ app.post(`/api/updateresources`, async (req, res) => {
         }
     })
     console.log(set);
-    let response = await query_execute(`UPDATE webdata4.resources SET ${set} where Resource_ID = ?`, user.Resource_ID);
+    let response = await query_execute(`UPDATE resources SET ${set} where Resource_ID = ?`, user.Resource_ID);
     console.log(response);
     res.json(response);
 });
@@ -100,26 +86,27 @@ app.post(`/api/updateresources`, async (req, res) => {
 
 app.post(`/api/addResources`, async (req, res) => {
     const { user } = req.body;
+    delete user['Resource_ID'];
     let values = [];
     Object.entries(user).map((value, key) => {
         values.push(value[1]);
     });
     console.log(values);
-    let response = await insert_query(`INSERT INTO  webdata4.resources (Resource_ID,Resource_Name,SOW_Category,Billing_Type,City,Shore,Skill_Set) values ?`, values);
+    let response = await insert_query(`INSERT INTO  resources (Resource_Name,SOW_Category,Billing_Type,City,Shore,Skill_Set) values ?`, values);
     console.log(response);
     res.json(response);
 });
 
 app.post('/api/deleteresources', async (req, res) => {
     const { user } = req.body;
-    let response = await query_execute(`DELETE FROM  webdata4.resources  where Resource_ID = ?`, user.Resource_ID);
+    let response = await query_execute(`DELETE FROM  resources  where Resource_ID = ?`, user.Resource_ID);
     console.log(response);
     res.json(response);
 })
 
 app.get('/api/getprojects', async (req, res) => {
     let response = [];
-    response = await query_execute(`SELECT * FROM webdata4.projects where projects.Delete = 'N'`);
+    response = await query_execute(`SELECT * FROM projects where projects.Delete = 'N'`);
     res.json(response);
 });
 
@@ -137,25 +124,26 @@ app.post(`/api/updateproject`, async (req, res) => {
             set += `${value[0]}='${value[1]}'`;
         }
     })
-    let response = await query_execute(`UPDATE webdata4.projects SET ${set} where Project_ID = ?`, project.Project_ID);
+    let response = await query_execute(`UPDATE projects SET ${set} where Project_ID = ?`, project.Project_ID);
     res.json(response);
 });
 
 app.post(`/api/addProjects`, async (req, res) => {
     const { project } = req.body;
+    delete project['Project_ID'];
     let values = [];
     Object.entries(project).map((value, key) => {
         values.push(value[1]);
     });
     console.log(values);
-    let response = await insert_query(`INSERT INTO  webdata4.projects (Project_ID,Project_Code,Project_Name) values ?`, values);
+    let response = await insert_query(`INSERT INTO  projects (Project_Code,Project_Name) values ?`, values);
     console.log(response);
     res.json(response);
 });
 
 app.post('/api/deleteproject', async (req, res) => {
     const { project } = req.body;
-    let response = await query_execute(`DELETE FROM  webdata4.projects  where Project_ID = ?`, project.Project_ID);
+    let response = await query_execute(`DELETE FROM  projects  where Project_ID = ?`, project.Project_ID);
     console.log(response);
     res.json(response);
 })
@@ -163,7 +151,7 @@ app.post('/api/deleteproject', async (req, res) => {
 
 app.get('/api/getskills', async (req, res) => {
     let response = [];
-    response = await query_execute(`SELECT * FROM webdata4.skill where skill.Delete = 'N'`);
+    response = await query_execute(`SELECT * FROM skill where skill.Delete = 'N'`);
     res.json(response);
 });
 
@@ -181,25 +169,27 @@ app.post(`/api/updateskill`, async (req, res) => {
             set += `${value[0]}='${value[1]}'`;
         }
     })
-    let response = await query_execute(`UPDATE webdata4.skill SET ${set} where Skill_ID = ?`, skill.Skill_ID);
+    let response = await query_execute(`UPDATE skill SET ${set} where Skill_ID = ?`, skill.Skill_ID);
     res.json(response);
 });
 
 app.post(`/api/addskill`, async (req, res) => {
     const { skill } = req.body;
+    delete skill['Skill_ID'];
     let values = [];
     Object.entries(skill).map((value, key) => {
         values.push(value[1]);
     });
     console.log(values);
-    let response = await insert_query(`INSERT INTO  webdata4.skill (Skill_ID,Skill_Name) values ?`, values);
+    let response = await insert_query(`INSERT INTO  skill (Skill_Name) values ?`, values);
     console.log(response);
     res.json(response);
 });
 
 app.post('/api/deleteskill', async (req, res) => {
     const { skill } = req.body;
-    let response = await query_execute(`DELETE FROM  webdata4.skill  where Skill_ID = ?`, skill.Skill_ID);
+    let set =  `skill.Delete='Y'`;
+    let response = await query_execute(`UPDATE skill SET ${set} where Skill_ID = ?`, skill.Skill_ID);
     console.log(response);
     res.json(response);
 });
@@ -228,13 +218,13 @@ app.post('/api/assignTaskToResoruce', async (req, res) => {
         values.push(value[1]);
     });
     console.log(values);
-    let response = await insert_query(`INSERT INTO  webdata4.capacity_demand(Project_Code,Project_Name,Resource_Name,To_Date,Year,Month,Actual_Hours,Planned_Hours,Resource_ID) values ?`, values);
+    let response = await insert_query(`INSERT INTO  capacity_demand(Project_Code,Project_Name,Resource_Name,To_Date,Year,Month,Actual_Hours,Planned_Hours,Resource_ID) values ?`, values);
     console.log(response);
     res.json(response);
 });
 app.post('/api/getTimeSheetRecord',async(req,res) => {
     const { month,year,resourcename } = req.body;
-    let response = await insert_query(`Select * from webdata4.capacity_demand where Month='${month}' and Year='${year}' and Resource_Name='${resourcename}' `);
+    let response = await insert_query(`Select * from capacity_demand where Month='${month}' and Year='${year}' and Resource_Name='${resourcename}' `);
     console.log(response);
     res.json(response);
 })
@@ -245,24 +235,25 @@ app.get('/api/fetchMonthYear',async(req,res) => {
     res.send(data);
 })
 
-app.get('/api/fetchTransactionDetails',async(req,res) => {
-    const data = await query_execute(`select * from projects`);
-    console.log(data);
-    res.send(data);
-})
-
 app.get('/api/fetchProjectDetails',async(req,res) => {
-    const data = await query_execute('select * from projects');
+    const data = await query_execute("select * from projects");
     res.send(data);
 })
 
 app.get('/api/fetchResourceDetails',async(req,res)=> {
-    const data = await query_execute(`select distinct * from resources order by Resource_Name`);
+    const Released = "Released";
+    const data = await query_execute("select distinct * from resources where shore != ? order by Resource_Name",Released);
     console.log(data);
     res.send(data);
 
 });
 
+app.get('/api/fetchConfigDetails',async(req,res)=> {
+    const data = await query_execute(`select distinct config_ID,config_key,config_value from configuration_table`);
+    //console.log(data);
+    res.send(data);
+
+});
 
 app.post("/api/resourceTimeSheet", (req, res) => {
     console.log("post Request", req.body);
@@ -294,6 +285,8 @@ app.post("/api/resourceTimeSheet", (req, res) => {
     })
     console.log(newObjArr);
     newObjArr.map(async (data) => {
+        let actualHours =  data.Actual_Hours === undefined ? 0 : data.Actual_Hours;
+        console.log("actualHours : "+ actualHours);
         query_execute(" select count(*) as totalsize  from capacity_demand where Resource_ID = '" + data.Resource_ID + "' and Week_ID = '" + data.Week_ID + "' and Project_Code = '" + data.Project_Code + "'")
             .then(function (rows) {
                 console.log(rows);
@@ -309,7 +302,7 @@ app.post("/api/resourceTimeSheet", (req, res) => {
                 } else {
                     //console.log("dateFormat : "+ data.created_at);
 
-                    query_execute("update capacity_demand SET Planned_Hours = '" + data.Planned_Hours + "', Actual_Hours = '" + data.Actual_Hours + "', modified_at = '" + dateFormated + "', modified_by = '" + data.Resource_Name + "' where Resource_ID = '" + data.Resource_ID + "' and Week_ID = '" + data.Week_ID + "' and Project_Code = '" + data.Project_Code + "'").then(function (rows) {
+                    query_execute("update capacity_demand SET Planned_Hours = '" + data.Planned_Hours + "', Actual_Hours = '" + actualHours + "', modified_at = '" + dateFormated + "', modified_by = '" + data.Resource_Name + "' where Resource_ID = '" + data.Resource_ID + "' and Week_ID = '" + data.Week_ID + "' and Project_Code = '" + data.Project_Code + "'").then(function (rows) {
                         console.log("Update the details sucessfully : " + data.Project_Code);
                     })
                         .catch(error => {
@@ -318,7 +311,7 @@ app.post("/api/resourceTimeSheet", (req, res) => {
                 }
             });
     });
-    res.status(201).json(newObjArr);
+        res.status(201).json({status:200,message:'Record Inserted Successfully'});
 });
 
 app.post("/api/fetchAssignedProject", (req, res) => {
@@ -326,7 +319,7 @@ app.post("/api/fetchAssignedProject", (req, res) => {
     const resID = req.body.idSelection.resourceID;
     const weekId = req.body.idSelection.weekID;
     const year = req.body.idSelection.year;
-    query_execute("select Project_Code,Project_Name,Planned_Hours from capacity_demand where Resource_ID = '" + resID + "' and Week_ID = '" + weekId + "' and Year = '" + year + "'").then(function (rows) {
+    query_execute("select Project_Code,Project_Name,Planned_Hours,Actual_Hours from capacity_demand where Resource_ID = '" + resID + "' and Week_ID = '" + weekId + "' and Year = '" + year + "'").then(function (rows) {
         // console.log(rows);
         res.json(rows);
         console.log("Fetcting Manager Assignee Projects based on  resource : " + resID + "and week : " + weekId + " year : " + year);
